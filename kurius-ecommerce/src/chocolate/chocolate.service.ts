@@ -1,36 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { ChocolateRepository } from './chocolate.repository';
 
 @Injectable()
 export class ChocolateService {
-  private chocolates = [
-    {
-      id: 1,
-      type: 'black',
-      percentage: '70%',
-    },
-    {
-      id: 2,
-      type: 'black',
-      percentage: '54%',
-    },
-    {
-      id: 3,
-      type: 'Chocolate with milk',
-      percentage: '45%',
-    },
-    {
-      id: 4,
-      type: 'White',
-      percentage: '35%',
-    },
-  ];
+  constructor(private chocolateRepository: ChocolateRepository) {}
 
   findAll() {
-    return this.chocolates;
+    return this.chocolateRepository.findAll;
   }
 
   findById(id: number) {
-    const chocolate = this.chocolates.find((chocolate) => chocolate.id === id);
+    const chocolate = this.chocolateRepository.findById(id);
     return chocolate;
   }
 }
