@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ChocolateBarModule } from './chocolate-bar/chocolate-bar.module';
 import { ChocolateModule } from './chocolate/chocolate.module';
 
+const modules = [ChocolateModule];
+
 @Module({
-  imports: [ChocolateBarModule, ChocolateModule],
+  imports: [...modules],
   controllers: [],
   providers: [],
   exports: [],
