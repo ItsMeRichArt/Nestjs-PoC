@@ -1,30 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable }          from '@nestjs/common';
 import { ChocolateRepository } from './chocolate.repository';
-import { ChocolateDTO } from './dto/create-chocolate.dto';
+import { ChocolateCreateDTO }  from './dto/chocolate-create.dto';
 
 @Injectable()
 export class ChocolateService {
 
-  constructor(private chocolateRepository: ChocolateRepository) {}
+  constructor( private chocolateRepository: ChocolateRepository ) {}
 
   findAll() {
     return this.chocolateRepository.findAll();
   }
 
-  findById(id: string) {
-    return this.chocolateRepository.findById(id);
+  findOne( searchTerm: string ) {
+    return this.chocolateRepository.findOne( searchTerm );
   }
 
-  createChocolate(chocolate: ChocolateDTO){
-    return this.chocolateRepository.createChocolate(chocolate);
+  create( chocolate: ChocolateCreateDTO ){
+    return this.chocolateRepository.create( chocolate );
   }
 
-  updateChocolate(id: string, chocolate: ChocolateDTO) {
-    return this.chocolateRepository.updateChocolate(id, chocolate);
+  update( searchTerm: string, chocolate: ChocolateCreateDTO ) {
+    return this.chocolateRepository.update( searchTerm, chocolate );
   }
 
-  deleteChocolateService(id: string) {
-    return this.chocolateRepository.deleteChocolateRepository(id);
+  delete( id: string ) {
+    return this.chocolateRepository.delete( id );
   }
 
 }

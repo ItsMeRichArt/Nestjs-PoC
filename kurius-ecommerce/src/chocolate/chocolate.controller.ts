@@ -1,37 +1,43 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
-import { ChocolateService } from './chocolate.service';
-import { ChocolateDTO } from './dto/create-chocolate.dto';
+import { Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { ChocolateService }     from './chocolate.service';
+import { ChocolateCreateDTO }   from './dto/chocolate-create.dto';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
-@Controller('chocolate')
+@ApiTags('chocolates')
+@Controller('chocolates')
 export class ChocolateController {
-  constructor(private chocolateService: ChocolateService) {}
+  constructor( private chocolateService: ChocolateService ) {}
 
   @Get()
   getAllChocolates() {
     return this.chocolateService.findAll();
   }
 
-  @Get(':id')
-  getChocolateById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.chocolateService.findById(id);
+  @Get( ':searchTerm' )
+  getChocolateById(@Param( 'searchTerm' ) searchTerm: string) {
+    const chocolate = this.chocolateService.findOne( searchTerm );
+    if ( !chocolate ) throw new NotFoundException( `Chocolate type with number ${searchTerm} was not found` );
+    return chocolate;
   }
 
   @Post()
-  createChocolate(@Body() createChocolateDTO: ChocolateDTO){
-    return this.chocolateService.createChocolate(createChocolateDTO);
+  @ApiResponse({ status: 201, description: 'A new chocolate type has been successfully created.'})
+  @ApiResponse({ status: 403, description: 'Forbidden chocolate variety'})
+  createChocolate( @Body() createChocolateDTO: ChocolateCreateDTO ){
+    return this.chocolateService.create( createChocolateDTO );
   }
 
-  @Patch(':id')
+  @Patch( ':searchTerm' )
   updateChocolate(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: ChocolateDTO) 
+    @Param( 'searchTerm' ) searchTerm: string,
+    @Body() body: ChocolateCreateDTO ) 
   {
-    return this.chocolateService.updateChocolate(id, body);
+    return this.chocolateService.update( searchTerm, body );
   }
 
-  @Delete(':id')
-  deleteChocolate(@Param('id', ParseUUIDPipe) id: string) {
-    return this.chocolateService.deleteChocolateService(id);
+    @Delete( ':id' )
+  deleteChocolate( @Param( 'id' ) id: string ) {
+    return this.chocolateService.delete( id );
   }
 
 }

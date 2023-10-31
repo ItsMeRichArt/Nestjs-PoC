@@ -1,74 +1,88 @@
-import { BadRequestException, Injectable, NotFoundException, Delete } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Delete, InternalServerErrorException } from '@nestjs/common';
 import { ChocolateEntity } from './entities/chocolate.entity';
-import {v4 as uuid } from 'uuid';
-import { ChocolateDTO } from './dto/create-chocolate.dto';
+import { ChocolateCreateDTO } from './dto/chocolate-create.dto';
+import { Model, isValidObjectId } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class ChocolateRepository {
 
-  private chocolates: ChocolateEntity[] = [{
-    id: uuid(),
-    type: 'bar',
-    description: 'Chocolate in bar presentation of 50g for final costumers',
-  }, {
-    id: uuid(),
-    type: 'coberture',
-    description: 'Professional chocolate of 1kg and 2.kg for professional usage',
-  }, {
-    id: uuid(),
-    type: 'chocolatin',
-    description: 'Short bar of chocolate of 6g for bakary usage',
-  }];
+  constructor( 
+    @InjectModel( ChocolateEntity.name )
+    private readonly chocolateModel: Model<ChocolateEntity> 
+  ) {};
 
   findAll() {
-    return this.chocolates;
+    return this.chocolateModel.find();
   }
 
-  findById(id: string) {
-    const chocolate = this.chocolates.find(chocolate => chocolate.id === id);
+  async findOne( searchTerm: string ) {
 
-    if (!chocolate) throw new NotFoundException(`Chocolate type with id ${id} was not found`);
+    let chocolate: ChocolateEntity;
+    
+    if( !isNaN( +searchTerm ) ){
+      chocolate = await this.chocolateModel.findOne({ id: searchTerm });
+    }
 
+    if( !chocolate && isValidObjectId( searchTerm ) ) {
+      chocolate = await this.chocolateModel.findById( searchTerm );
+    }
+
+    if ( !chocolate ) {
+      chocolate = await this.chocolateModel.findOne({ name: searchTerm.toLowerCase().trim() })
+    }
+
+    if( !chocolate ) throw new NotFoundException(`Chocolat with id ${searchTerm} not found`);
+    
     return chocolate;
+
   }
 
-  createChocolate(chocolateDTO: ChocolateDTO){
-    const newChocolate: ChocolateEntity = {
-      id: uuid(),
-      ...chocolateDTO
-    };
+  async create( chocolateDTO: ChocolateCreateDTO ){
 
-    this.chocolates.push(newChocolate);
-    return newChocolate;
+    chocolateDTO.name = chocolateDTO.name.toLowerCase();
+
+    try {
+      const newChocolate = await this.chocolateModel.create( chocolateDTO );
+      return newChocolate;
+    } catch (error) {
+      this.handleExceptions( error );
+    }
+
   }
 
-  updateChocolate(id: string, updateChocolate: ChocolateDTO) {
-    let chocolateToUpdate = this.findById(id);
+  async update( searchTerm: string, updateChocolate: ChocolateCreateDTO ) {
 
-    if ( chocolateToUpdate.id && chocolateToUpdate.id !== id) 
-      throw new BadRequestException();
+    const chocolateToUpdate = await this.findOne( searchTerm );
 
-    this.chocolates = this.chocolates.map( chocolate => {
+    if( updateChocolate.name ) {
+      updateChocolate.name = updateChocolate.name.toLowerCase();
 
-      if(chocolate.id === id) {
-        chocolateToUpdate = { ...chocolateToUpdate, ...updateChocolate }
-        return chocolateToUpdate;
+      try{
+        await chocolateToUpdate.updateOne( updateChocolate );
+        return { ...chocolateToUpdate.toJSON(), ...updateChocolate };
+      } catch (error) {
+        this.handleExceptions( error );
       }
-
-      return chocolate;
-    });
-
-    return chocolateToUpdate;
-  }
-
-  deleteChocolateRepository(id: string) {
-    const chocolate = this.findById(id);
-
-    if (chocolate) {
-      this.chocolates.splice(this.chocolates.indexOf(chocolate), 1);
-    } 
-
-    return this.chocolates;
+    }
+      
   }
   
+  async delete( id: string ) {
+
+    const chocolate =  await this.findOne( id );
+    await chocolate.deleteOne();
+    return { id };
+
+  }
+
+  private handleExceptions( error: any ) {
+    if ( error.code === 11000 ) {
+      throw new BadRequestException(`Chocolate exists in db ${ JSON.stringify( error.keyValue ) }`);
+    }
+    console.log(error);
+    throw new InternalServerErrorException(`Can't create Chocolate - Check server logs`);
+  }
+    
 }
+
