@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, Delete, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { ChocolateEntity } from './entities/chocolate.entity';
 import { ChocolateCreateDTO } from './dto/chocolate-create.dto';
 import { Model, isValidObjectId } from 'mongoose';
@@ -13,7 +13,8 @@ export class ChocolateRepository {
   ) {};
 
   findAll() {
-    return this.chocolateModel.find();
+    return this.chocolateModel.find(); 
+    //Implement NotFoundException for 0 records
   }
 
   async findOne( searchTerm: string ) {
